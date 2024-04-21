@@ -7,8 +7,24 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello World!")
-	})
+	http.HandleFunc("/users", UserServer)
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func UserServer(w http.ResponseWriter, r *http.Request) {
+	var status int
+	switch r.Method {
+	case http.MethodGet:
+		status = 200
+		w.WriteHeader(status)
+		fmt.Fprintf(w, `{"status": %d, "message": "%s"}`, status, "success in get")
+	case http.MethodPost:
+		status = 200
+		w.WriteHeader(status)
+		fmt.Fprintf(w, `{"status": %d, "message": "%s"}`, status, "success in post")
+	default:
+		status = 404
+		w.WriteHeader(status)
+		fmt.Fprintf(w, `{"status": %d, "message": "%s"}`, status, "not found")
+	}
 }
