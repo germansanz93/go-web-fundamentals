@@ -10,7 +10,7 @@ import (
 type User struct {
 	ID        uint64 `json:"id"`
 	FirstName string `json:"first_name"`
-	LastName  string `json:"las_name"`
+	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 }
 
@@ -43,11 +43,11 @@ func init() { //La funcion init nos sirve para inicializar valores, si nosotros 
 
 func main() {
 	http.HandleFunc("/users", UserServer)
+	log.Println("Server started at port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func UserServer(w http.ResponseWriter, r *http.Request) {
-	var status int
 	switch r.Method {
 	case http.MethodGet:
 		GetAllUsers(w)
@@ -61,9 +61,7 @@ func UserServer(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%+v\n", u)
 		PostUser(w, u)
 	default:
-		status = 404
-		w.WriteHeader(status)
-		fmt.Fprintf(w, `{"status": %d, "message": "%s"}`, status, "not found")
+		InvalidMethod(w)
 	}
 }
 
@@ -72,8 +70,24 @@ func GetAllUsers(w http.ResponseWriter) {
 }
 
 func PostUser(w http.ResponseWriter, data interface{}) {
-	maxId++
 	user := data.(User) //Casteo la interfaz a User
+
+	if user.FirstName == "" {
+		MsgResponse(w, http.StatusBadRequest, "First name is required")
+		return
+	}
+
+	if user.LastName == "" {
+		MsgResponse(w, http.StatusBadRequest, "Last name is required")
+		return
+	}
+
+	if user.Email == "" {
+		MsgResponse(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	maxId++
 	user.ID = maxId
 	users = append(users, user)
 	DataResponse(w, http.StatusCreated, user)
@@ -92,4 +106,11 @@ func DataResponse(w http.ResponseWriter, status int, users interface{}) {
 func MsgResponse(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)
 	fmt.Fprintf(w, `{"status": %d, "message": %s}`, status, message)
+}
+
+func InvalidMethod(w http.ResponseWriter) {
+	status := http.StatusNotFound
+	w.WriteHeader(status)
+	fmt.Fprintf(w, `{"status": %d, "message": "method doesn't exist"}`, status)
+
 }
