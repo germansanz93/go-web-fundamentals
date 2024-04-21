@@ -10,7 +10,7 @@ import (
 type (
 	Service interface {
 		Create(ctx context.Context, firsName, lastName, email string) (*domain.User, error)
-		GetAll(ctx context.Context, firsName, lastName, email string) ([]domain.User, error)
+		GetAll(ctx context.Context) ([]domain.User, error)
 	}
 
 	service struct {
@@ -19,7 +19,7 @@ type (
 	}
 )
 
-func newService(l *log.Logger, repo Repository) Service {
+func NewService(l *log.Logger, repo Repository) Service {
 	return &service{
 		log:  l,
 		repo: repo,
@@ -39,7 +39,7 @@ func (s service) Create(ctx context.Context, firsName, lastName, email string) (
 	return user, nil //Tener en cuenta que al estar laburando con puntero, al el repository modificarlo, estaremos devolviendo el modificado
 }
 
-func (s service) GetAll(ctx context.Context, firsName, lastName, email string) ([]domain.User, error) {
+func (s service) GetAll(ctx context.Context) ([]domain.User, error) {
 	users, err := s.repo.GetAll(ctx)
 
 	if err != nil {
