@@ -4,40 +4,67 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/germansanz93/go-web-fundamentals/internal/user"
 	"github.com/germansanz93/go-web-fundamentals/pkg/transport"
 )
 
 func NewUserHttpServer(ctx context.Context, router *http.ServeMux, endpoints user.Endpoints) {
-	router.HandleFunc("/users", UserServer(ctx, endpoints))
+	router.HandleFunc("/users/", UserServer(ctx, endpoints))
 
 }
 
 func UserServer(ctx context.Context, endpoints user.Endpoints) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		tran := transport.New(w, r, ctx)
+
+		url := r.URL.Path
+		log.Println(r.Method, url)
+
+		path, pathSize := transport.Clean(url)
+
+		params := make(map[string]string)
+		if pathSize == 4 && path[2] != "" {
+			params["userId"] = path[2]
+		}
+
+		tran := transport.New(w, r, context.WithValue(ctx, "params", params))
+
+		var end user.Controller
+		var deco func(ctx context.Context, r *http.Request) (interface{}, error)
 
 		switch r.Method {
 		case http.MethodGet:
-			tran.Server(
-				transport.Endpoint(endpoints.GetAll),
-				decodeGetAllUser,
-				encodeResponse,
-				encodeError,
-			)
-			return
+			switch pathSize {
+			case 3:
+				end = endpoints.GetAll
+				deco = decodeGetAllUser
+			case 4:
+				end = endpoints.Get
+				deco = decodeGetUser
+			}
+
 		case http.MethodPost:
+			switch pathSize {
+			case 3:
+				end = endpoints.Create
+				deco = decodeCreateUser
+			}
+		default:
+			InvalidMethod(w)
+		}
+
+		if end != nil && deco != nil {
 			tran.Server(
-				transport.Endpoint(endpoints.Create),
-				decodeCreateUser,
+				transport.Endpoint(end),
+				deco,
 				encodeResponse,
 				encodeError,
 			)
-			return
-		default:
+		} else {
 			InvalidMethod(w)
 		}
 	}
@@ -72,6 +99,15 @@ func decodeCreateUser(ctx context.Context, r *http.Request) (interface{}, error)
 
 func decodeGetAllUser(ctx context.Context, r *http.Request) (interface{}, error) {
 	return nil, nil
+}
+
+func decodeGetUser(ctx context.Context, r *http.Request) (interface{}, error) {
+	params := ctx.Value("params").(map[string]string)
+	id, err := strconv.ParseUint(params["userId"], 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return user.GetReq{Id: id}, nil
 }
 
 func InvalidMethod(w http.ResponseWriter) {

@@ -11,6 +11,11 @@ type (
 	Endpoints struct {
 		Create Controller
 		GetAll Controller
+		Get    Controller
+	}
+
+	GetReq struct {
+		Id uint64
 	}
 
 	CreateReq struct {
@@ -24,6 +29,7 @@ func MakeEndpoints(ctx context.Context, s Service) Endpoints {
 	return Endpoints{
 		Create: makeCreateEndpoint(s),
 		GetAll: makeGetAllEndpoint(s),
+		Get:    makeGetEndpoint(s),
 	}
 }
 
@@ -34,6 +40,13 @@ func makeGetAllEndpoint(s Service) Controller {
 			return nil, err
 		}
 		return users, nil
+	}
+}
+
+func makeGetEndpoint(s Service) Controller {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(GetReq)
+		return s.Get(ctx, req.Id)
 	}
 }
 

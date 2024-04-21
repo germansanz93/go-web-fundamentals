@@ -2,9 +2,11 @@ package user
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/germansanz93/go-web-fundamentals/internal/user/domain"
+	"golang.org/x/exp/slices"
 )
 
 type DB struct {
@@ -16,6 +18,7 @@ type (
 	Repository interface {
 		Create(ctx context.Context, user *domain.User) error
 		GetAll(ctx context.Context) ([]domain.User, error)
+		Get(ctx context.Context, id uint64) (*domain.User, error)
 	}
 
 	repo struct {
@@ -42,4 +45,16 @@ func (r *repo) Create(ctx context.Context, user *domain.User) error {
 func (r *repo) GetAll(ctx context.Context) ([]domain.User, error) {
 	r.log.Println("repository: user get all")
 	return r.db.Users, nil
+}
+
+func (r *repo) Get(ctx context.Context, id uint64) (*domain.User, error) {
+	index := slices.IndexFunc(r.db.Users, func(v domain.User) bool {
+		return v.ID == id
+	})
+
+	if index < 0 {
+		return nil, errors.New("user not found")
+	}
+
+	return &r.db.Users[index], nil
 }

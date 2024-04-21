@@ -11,6 +11,7 @@ type (
 	Service interface {
 		Create(ctx context.Context, firsName, lastName, email string) (*domain.User, error)
 		GetAll(ctx context.Context) ([]domain.User, error)
+		Get(ctx context.Context, id uint64) (*domain.User, error)
 	}
 
 	service struct {
@@ -47,4 +48,8 @@ func (s service) GetAll(ctx context.Context) ([]domain.User, error) {
 	}
 	s.log.Println("service: users get all")
 	return users, nil
+}
+
+func (s service) Get(ctx context.Context, id uint64) (*domain.User, error) {
+	return s.repo.Get(ctx, id)
 }
