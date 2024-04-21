@@ -7,6 +7,7 @@ import (
 
 	"github.com/germansanz93/go-web-fundamentals/internal/user"
 	"github.com/germansanz93/go-web-fundamentals/pkg/bootstrap"
+	"github.com/germansanz93/go-web-fundamentals/pkg/handler"
 )
 
 func main() {
@@ -21,7 +22,8 @@ func main() {
 
 	ctx := context.Background()
 
-	server.HandleFunc("/users", user.MakeEndpoints(ctx, service))
+	handler.NewUserHttpServer(ctx, server, user.MakeEndpoints(ctx, service))
+
 	log.Println("Server started at port 8080")
 	log.Fatal(http.ListenAndServe(":8080", server))
 }
