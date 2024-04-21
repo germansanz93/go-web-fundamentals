@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/germansanz93/go-web-fundamentals/internal/user/domain"
@@ -54,7 +53,7 @@ func (r *repo) Get(ctx context.Context, id uint64) (*domain.User, error) {
 	})
 
 	if index < 0 {
-		return nil, errors.New("user not found")
+		return nil, ErrNotFound{id}
 	}
 
 	return &r.db.Users[index], nil

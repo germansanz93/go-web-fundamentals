@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 )
 
 type (
@@ -64,15 +63,15 @@ func makeCreateEndpoint(s Service) Controller {
 		userRequest := request.(CreateReq) //Casteo la interfaz a User
 
 		if userRequest.FirstName == "" {
-			return nil, errors.New("first name is required")
+			return nil, ErrFirstNameRequired
 		}
 
 		if userRequest.LastName == "" {
-			return nil, errors.New("last name is required")
+			return nil, ErrLastNameRequired
 		}
 
 		if userRequest.Email == "" {
-			return nil, errors.New("email is required")
+			return nil, ErrEmailRequired
 		}
 		user, err := s.Create(ctx, userRequest.FirstName, userRequest.LastName, userRequest.Email)
 		if err != nil {
@@ -85,6 +84,19 @@ func makeCreateEndpoint(s Service) Controller {
 func makeUpdateEndpoint(s Service) Controller {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(UpdateReq)
+
+		if req.FirstName != nil && *req.FirstName == "" {
+			return nil, ErrFirstNameRequired
+		}
+
+		if req.LastName != nil && *req.LastName == "" {
+			return nil, ErrLastNameRequired
+		}
+
+		if req.Email != nil && *req.Email == "" {
+			return nil, ErrEmailRequired
+		}
+
 		if err := s.Update(ctx, req.Id, req.FirstName, req.LastName, req.Email); err != nil {
 			return nil, err
 		}
