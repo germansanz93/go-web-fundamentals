@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/germansanz93/go-fundamentals-response/response"
 	"github.com/germansanz93/go-web-fundamentals/internal/user"
 	"github.com/germansanz93/go-web-fundamentals/pkg/transport"
 )
@@ -79,22 +80,17 @@ func UserServer(ctx context.Context, endpoints user.Endpoints) func(w http.Respo
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	status := http.StatusInternalServerError
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	fmt.Fprintf(w, `{"status": %d, "message": "%s"}`, status, err)
+	resp := err.(response.Response)
+	w.WriteHeader(resp.StatusCode())
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, resp interface{}) error {
-	data, err := json.Marshal(resp)
-	if err != nil {
-		return err
-	}
-	status := http.StatusOK
+	r := resp.(response.Response)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	fmt.Fprintf(w, `{"status": %d, "data": %s}`, status, data)
-	return nil
+	w.WriteHeader(r.StatusCode())
+	return json.NewEncoder(w).Encode(resp)
 }
 
 func decodeCreateUser(ctx context.Context, r *http.Request) (interface{}, error) {
