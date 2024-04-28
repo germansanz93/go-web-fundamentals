@@ -17,8 +17,6 @@ func main() {
 
 	_ = godotenv.Load()
 
-	server := http.NewServeMux()
-
 	db, err := bootstrap.NewDB()
 
 	if err != nil {
@@ -38,9 +36,27 @@ func main() {
 
 	ctx := context.Background()
 
-	handler.NewUserHttpServer(ctx, server, user.MakeEndpoints(ctx, service))
-
+	h := handler.NewUserHttpServer(user.MakeEndpoints(ctx, service))
 	port := os.Getenv("PORT")
+	address := fmt.Sprintf("127.0.0.1:%s", port)
+	srv := &http.Server{
+		Handler: accessControl(h),
+		Addr:    address,
+	}
 	log.Println("Server started at port: ", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), server))
+	log.Fatal(srv.ListenAndServe())
+}
+
+func accessControl(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS, HEAD, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,User-Agent,X-Requested-With")
+
+		if r.Method == "OPTIONS" {
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
