@@ -2,15 +2,21 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/germansanz93/go-web-fundamentals/internal/user"
 	"github.com/germansanz93/go-web-fundamentals/pkg/bootstrap"
 	"github.com/germansanz93/go-web-fundamentals/pkg/handler"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	_ = godotenv.Load()
+
 	server := http.NewServeMux()
 
 	db, err := bootstrap.NewDB()
@@ -34,6 +40,7 @@ func main() {
 
 	handler.NewUserHttpServer(ctx, server, user.MakeEndpoints(ctx, service))
 
-	log.Println("Server started at port 8080")
-	log.Fatal(http.ListenAndServe(":8080", server))
+	port := os.Getenv("PORT")
+	log.Println("Server started at port: ", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), server))
 }
